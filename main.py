@@ -11,7 +11,7 @@ class FileManagerApp:
         self.root.title("Gestor de Archivos")
         self.root.geometry("500x600")
 
-        self.folder_path = None  # Sin carpeta seleccionada al inicio
+        self.folder_path = None
 
         # === BOTÓN SELECCIONAR CARPETA ===
         self.select_button = tk.Button(
@@ -66,7 +66,6 @@ class FileManagerApp:
         self.path_label.config(text=f"Carpeta actual: {self.folder_path}")
         self.path_label.pack(pady=5)
 
-        # ORDEN NUEVO DE BOTONES EN PANTALLA
         self.create_folder_button.pack(pady=5)
         self.create_file_button.pack(pady=5)
         self.delete_folder_button.pack(pady=5)
@@ -76,10 +75,9 @@ class FileManagerApp:
         self.delete_button.pack(pady=5)
 
     # ==================================================
-    # FUNCIONES PRINCIPALES (mismo orden que botones)
+    # FUNCIONES
     # ==================================================
 
-    # Crear subcarpeta
     def create_subfolder(self):
         folder_name = simpledialog.askstring(
             "Crear Carpeta", "Nombre de la nueva carpeta:"
@@ -88,7 +86,6 @@ class FileManagerApp:
             new_folder_path = create_folder(self.folder_path, folder_name)
             messagebox.showinfo("Éxito", f"Carpeta creada: {new_folder_path}")
 
-    # Crear archivo
     def create_file(self):
         file_name = simpledialog.askstring(
             "Crear Archivo", "Nombre del archivo:"
@@ -109,7 +106,6 @@ class FileManagerApp:
 
             messagebox.showinfo("Éxito", f"Archivo creado: {file_path}")
 
-    # Eliminar carpeta
     def delete_selected_folder(self):
         folder_to_delete = filedialog.askdirectory(
             title="Selecciona la carpeta a eliminar"
@@ -117,29 +113,30 @@ class FileManagerApp:
         if folder_to_delete:
             delete_folder(folder_to_delete)
 
-    # Eliminar fichero
     def delete_file_action(self):
         fo.delete_file(self.folder_path)
 
-    # Organizar archivos
+    # ORGANIZAR ARCHIVOS
     def organize_action(self):
-        fo.organize_files(self.folder_path)
-        messagebox.showinfo("Éxito", "Archivos organizados correctamente")
+        if not self.folder_path:
+            return
 
-    # Renombrar archivos
+        result = fo.organize_files(self.folder_path)
+
+        if result:
+            messagebox.showinfo("Éxito", "Archivos organizados correctamente")
+        else:
+            messagebox.showwarning("Cancelado", "No se movió ningún archivo")
+
     def rename_action(self):
         fo.rename_files(self.folder_path)
         messagebox.showinfo("Éxito", "Archivos renombrados correctamente")
 
-    # Eliminar duplicados
     def delete_action(self):
         fo.delete_duplicates(self.folder_path)
         messagebox.showinfo("Éxito", "Duplicados eliminados")
 
 
-# ==================================================
-# PUNTO DE ENTRADA
-# ==================================================
 if __name__ == "__main__":
     root = tk.Tk()
     app = FileManagerApp(root)
