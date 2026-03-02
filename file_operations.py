@@ -33,12 +33,19 @@ def organize_files(folder):
         return False  # Canceló destino
 
     moved = 0
+    same_folder_error = False # Cuando seleccionas la misma carpeta
 
     for file_path in selected_files:
         try:
             filename = os.path.basename(file_path)
             destination_path = os.path.join(destination, filename)
 
+            # Comprobacion del mismo directorio
+            if os.path.abspath(os.path.dirname(file_path)) == os.path.abspath(destination):
+                same_folder_error = True
+                continue 
+            
+            # Generar nombre unico si ya existe
             base, ext = os.path.splitext(filename)
             counter = 1
             while os.path.exists(destination_path):
@@ -52,9 +59,13 @@ def organize_files(folder):
             messagebox.showerror("Error", f"No se pudo mover: {filename}\n{str(e)}")
             continue
 
+    # Si los archivos seleccionados ya estaban en la misma carpeta
+    if same_folder_error and moved == 0:
+        messagebox.showwarning("Error", "Los archivos seleccionados ya estan en esa misma carpeta")
+        return False
+    
     # Devuelve True solo si movió al menos un archivo
     return moved > 0
-
 
 # --------------------------------------------------
 # RENOMBRAR ARCHIVOS

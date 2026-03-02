@@ -3,7 +3,7 @@ from tkinter import filedialog, simpledialog, messagebox
 import os
 import file_operations as fo
 from folder_operations import create_folder, delete_folder
-
+import subprocess
 
 class FileManagerApp:
     def __init__(self, root):
@@ -29,6 +29,10 @@ class FileManagerApp:
 
         self.create_file_button = tk.Button(
             root, text="Crear archivo", command=self.create_file
+        )
+
+        self.open_file_button = tk.Button(
+            root, text="Abrir archivo", command=self.open_file_action
         )
 
         self.delete_folder_button = tk.Button(
@@ -68,6 +72,7 @@ class FileManagerApp:
 
         self.create_folder_button.pack(pady=5)
         self.create_file_button.pack(pady=5)
+        self.open_file_button.pack(pady=5)
         self.delete_folder_button.pack(pady=5)
         self.delete_file_button.pack(pady=5)
         self.organize_button.pack(pady=5)
@@ -88,23 +93,52 @@ class FileManagerApp:
 
     def create_file(self):
         file_name = simpledialog.askstring(
-            "Crear Archivo", "Nombre del archivo:"
+            "Crear Archivo", "Nombre del archivo:")
+        if not file_name:
+            return  # Usuario canceló
+
+        # Si no se especifica extensión, añadimos .txt por defecto
+        if '.' not in file_name:
+            file_name += ".txt"
+
+        file_path = os.path.join(self.folder_path, file_name)
+
+        # Si el archivo ya existe, añadir sufijo numérico
+        base, ext = os.path.splitext(file_name)
+        counter = 1
+        while os.path.exists(file_path):
+            file_path = os.path.join(self.folder_path, f"{base}({counter}){ext}")
+            counter += 1
+
+        # Crear archivo vacío
+        with open(file_path, 'w') as f:
+            f.write("")
+
+        messagebox.showinfo("Éxito", f"Archivo creado: {file_path}")
+    
+    def open_file_action(self):
+        if not self.folder_path:
+            messagebox.showwarning("Aviso", "No hay carpeta seleccionada")
+            return
+
+        # Selecciona un archivo
+        file_path = filedialog.askopenfilename(
+            initialdir=self.folder_path,
+            title="Selecciona un archivo para abrir"
         )
-        if file_name:
-            file_path = os.path.join(self.folder_path, file_name)
 
-            base, ext = os.path.splitext(file_name)
-            counter = 1
-            while os.path.exists(file_path):
-                file_path = os.path.join(
-                    self.folder_path, f"{base}({counter}){ext}"
-                )
-                counter += 1
+        if not file_path:
+            return  # Canceló
 
-            with open(file_path, "w") as f:
-                f.write("")
+        try:
+            # Abrir con la aplicación por defecto del sistema operativo
+            if os.name == "nt":  # Windows
+                os.startfile(file_path)
+            elif os.name == "posix":  # macOS / Linux
+                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", file_path])
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo abrir el archivo:\n{str(e)}")
 
-            messagebox.showinfo("Éxito", f"Archivo creado: {file_path}")
 
     def delete_selected_folder(self):
         folder_to_delete = filedialog.askdirectory(
