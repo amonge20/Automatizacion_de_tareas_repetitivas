@@ -48,7 +48,11 @@ class FileManagerApp:
         )
 
         self.rename_button = tk.Button(
-            root, text="Renombrar archivos", command=self.rename_action
+            root, text="Renombrar archivo", command=self.rename_action
+        )
+
+        self.rename_button_folder = tk.Button(
+            root, text="Renombrar carpeta", command=self.rename_folder_action
         )
 
         self.delete_button = tk.Button(
@@ -77,6 +81,7 @@ class FileManagerApp:
         self.delete_file_button.pack(pady=5)
         self.organize_button.pack(pady=5)
         self.rename_button.pack(pady=5)
+        self.rename_button_folder.pack(pady=5)
         self.delete_button.pack(pady=5)
 
     # ==================================================
@@ -163,9 +168,134 @@ class FileManagerApp:
             messagebox.showwarning("Cancelado", "No se movió ningún archivo")
 
     def rename_action(self):
-        fo.rename_files(self.folder_path)
-        messagebox.showinfo("Éxito", "Archivos renombrados correctamente")
+        if not self.folder_path:
+            messagebox.showwarning("Aviso", "No hay carpeta seleccionada.")
+            return
 
+        # Seleccionar archivo
+        selected_path = filedialog.askopenfilename(
+            initialdir=self.folder_path,
+            title="Selecciona un archivo para renombrar"
+        )
+
+        if not selected_path:
+            messagebox.showerror("Error", "No se ha seleccionado ningún archivo")
+            return
+
+        old_name = os.path.basename(selected_path)
+        old_base, old_ext = os.path.splitext(old_name)
+
+        # Pedir nuevo nombre
+        new_name = simpledialog.askstring(
+            "Renombrar",
+            "Introduce el nuevo nombre:",
+            initialvalue=old_name
+        )
+
+        if new_name is None:
+            messagebox.showerror("Error", "No se ha especificado un nuevo nombre.")
+            return
+
+        new_name = new_name.strip()
+
+        if not new_name:
+            messagebox.showerror("Error", "El nombre no puede estar vacío.")
+            return
+
+        new_base, new_ext = os.path.splitext(new_name)
+
+        # 🔹 Si el usuario no pone extensión
+        if not new_ext:
+            if old_ext:
+                # Mantener la extensión original
+                new_name = new_name + old_ext
+            else:
+                # Si el original tampoco tenía extensión → poner .txt
+                new_name = new_name + ".txt"
+
+        # Si el nombre final es el mismo
+        if new_name == old_name:
+            messagebox.showwarning("Aviso", "No se pudo cambiar el nombre porque es el mismo.")
+            return
+
+        new_path = os.path.join(os.path.dirname(selected_path), new_name)
+
+        if os.path.exists(new_path):
+            messagebox.showerror("Error", "Ya existe un archivo con ese nombre.")
+            return
+
+        try:
+            os.rename(selected_path, new_path)
+
+            messagebox.showinfo(
+                "Éxito",
+                f"Se ha cambiado el nombre del archivo de '{old_name}' a '{new_name}'."
+            )
+
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo cambiar el nombre:\n{str(e)}")
+
+    # Para cambiar el nombre de la carpeta
+    def rename_folder_action(self):
+        if not self.folder_path:
+            messagebox.showwarning("Aviso", "No hay carpeta seleccionada.")
+            return
+
+        # Seleccionar carpeta a renombrar
+        selected_path = filedialog.askdirectory(
+            initialdir=self.folder_path,
+            title="Selecciona una carpeta para renombrar"
+        )
+
+        # Si cancela selección
+        if not selected_path:
+            messagebox.showerror("Error", "No se ha seleccionado ninguna carpeta.")
+            return
+
+        old_name = os.path.basename(selected_path)
+
+        # Pedir nuevo nombre
+        new_name = simpledialog.askstring(
+            "Renombrar carpeta",
+            "Introduce el nuevo nombre:",
+            initialvalue=old_name
+        )
+
+        # Si cancela el nuevo nombre
+        if new_name is None:
+            messagebox.showerror("Error", "No se ha especificado un nuevo nombre.")
+            return
+
+        new_name = new_name.strip()
+
+        if not new_name:
+            messagebox.showerror("Error", "El nombre no puede estar vacío.")
+            return
+
+        # Si el nombre es el mismo
+        if new_name == old_name:
+            messagebox.showwarning("Aviso", "No se pudo cambiar el nombre porque es el mismo.")
+            return
+
+        new_path = os.path.join(os.path.dirname(selected_path), new_name)
+
+        # Si ya existe carpeta con ese nombre
+        if os.path.exists(new_path):
+            messagebox.showerror("Error", "Ya existe una carpeta con ese nombre.")
+            return
+
+        try:
+            os.rename(selected_path, new_path)
+
+            messagebox.showinfo(
+                "Éxito",
+                f"Se ha cambiado el nombre de la carpeta de '{old_name}' a '{new_name}'."
+            )
+
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo cambiar el nombre:\n{str(e)}")
+
+    # Eliminar duplicados
     def delete_action(self):
         fo.delete_duplicates(self.folder_path)
         messagebox.showinfo("Éxito", "Duplicados eliminados")

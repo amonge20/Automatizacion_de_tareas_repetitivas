@@ -68,20 +68,6 @@ def organize_files(folder):
     return moved > 0
 
 # --------------------------------------------------
-# RENOMBRAR ARCHIVOS
-# --------------------------------------------------
-def rename_files(folder):
-    counter = 1
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
-        if os.path.isfile(file_path):
-            name, ext = os.path.splitext(filename)
-            new_name = f"archivo_{counter}{ext}"
-            os.rename(file_path, os.path.join(folder, new_name))
-            counter += 1
-
-
-# --------------------------------------------------
 # ELIMINAR DUPLICADOS
 # --------------------------------------------------
 def delete_duplicates(folder):
