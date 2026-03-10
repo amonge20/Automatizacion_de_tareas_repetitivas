@@ -1,6 +1,4 @@
-import os
-import shutil
-import hashlib
+import os, re, shutil, hashlib
 from folder_operations import create_folder
 from tkinter import filedialog, messagebox
 
@@ -71,16 +69,37 @@ def organize_files(folder):
 # ELIMINAR DUPLICADOS
 # --------------------------------------------------
 def delete_duplicates(folder):
-    hashes = {}
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
-        if os.path.isfile(file_path):
-            filehash = file_hash(file_path)
-            if filehash in hashes:
-                os.remove(file_path)
-            else:
-                hashes[filehash] = file_path
+    removed = 0
+    items = os.listdir(folder)
 
+    originals = {}
+
+    for item in items:
+        path = os.path.join(folder, item)
+        name, ext = os.path.splitext(item)
+        base_name = re.sub(r'(\(\d+\)|\d+)$', '', name)
+
+        if not re.search(r'(\(\d+\)|\d+)$', name):
+            originals[base_name] = item
+        
+    # Eliminamos duplicados
+    for items in items:
+        path = os.path.join(folder, item)
+        name, ext = os.path.splitext(item)
+        base_name = re.sub(r'(\(\d+\)|\d+)$', name)
+
+        # Si existe original y este item NO es el original -> eliminar
+        if base_name in originals and item != originals[base_name]:
+            try:
+                if os.path.isfile(path):
+                    os.remove(path)
+                elif os.path.isdir(path):
+                    shutil.rmtree(path)
+                removed += 1
+            except Exception as e:
+                print(f"No se pudo eliminar {item}: {e}")
+
+    return removed
 
 # --------------------------------------------------
 # ELIMINAR UN ARCHIVO

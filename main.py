@@ -204,7 +204,7 @@ class FileManagerApp:
 
         new_base, new_ext = os.path.splitext(new_name)
 
-        # 🔹 Si el usuario no pone extensión
+        # Si el usuario no pone extensión
         if not new_ext:
             if old_ext:
                 # Mantener la extensión original
@@ -297,9 +297,12 @@ class FileManagerApp:
 
     # Eliminar duplicados
     def delete_action(self):
-        fo.delete_duplicates(self.folder_path)
-        messagebox.showinfo("Éxito", "Duplicados eliminados")
+        removed = fo.delete_duplicates(self.folder_path)
 
+        if removed > 0:
+            messagebox.showinfo("Exito", f"Se eliminaron {removed} duplicados")
+        else:
+            messagebox.showinfo("Info", "No se han encontrado duplicados")
 
 if __name__ == "__main__":
     root = tk.Tk()
