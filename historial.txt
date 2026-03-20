@@ -1,0 +1,13 @@
+[2026-03-20 19:05:46] Carpeta creada: C:/Users/aitor/Documents/dummy\hola
+[2026-03-20 19:05:53] Archivo creado: C:/Users/aitor/Documents/dummy\hola.txt
+[2026-03-20 19:08:11] Archivo copiado: C:/Users/aitor/Documents/dummy/hola.txt -> C:/Users/aitor/Documents/dummy/hola
+[2026-03-20 19:08:28] Archivo creado: C:/Users/aitor/Documents/dummy\hola(1).txt
+[2026-03-20 19:08:36] Archivo eliminado: C:/Users/aitor/Documents/dummy/adios(1).txt
+[2026-03-20 19:08:44] Archivo creado: C:/Users/aitor/Documents/dummy\adios.txt
+[2026-03-20 19:08:55] Archivo eliminado: C:/Users/aitor/Documents/dummy/adios.txt
+[2026-03-20 19:08:55] Archivo eliminado: C:/Users/aitor/Documents/dummy/texto(1).txt
+[2026-03-20 19:09:10] Duplicado eliminado: hola.txt
+[2026-03-20 19:09:22] Carpeta eliminada: C:/Users/aitor/Documents/dummy/hola
+[2026-03-20 19:35:45] Archivo copiado: C:/Users/aitor/Documents/dummy/hola(1).txt -> C:/Users/aitor/Documents/dummy\hola(1)(1).txt
+[2026-03-20 19:36:20] Duplicado eliminado: hola(1).txt
+[2026-03-20 20:34:16] Carpeta creada: C:/Users/aitor/Documents/dummy\prueba

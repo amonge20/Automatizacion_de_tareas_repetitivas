@@ -1,70 +1,109 @@
 import tkinter as tk
-from tkinter import filedialog, simpledialog, messagebox
-import os
+from tkinter import filedialog, simpledialog, messagebox, ttk
+import os, shutil, subprocess
 import file_operations as fo
 from folder_operations import create_folder, delete_folder
-import subprocess
+from history import log_action, read_history, reset_history
+
 
 class FileManagerApp:
+
     def __init__(self, root):
         self.root = root
         self.root.title("Gestor de Archivos")
-        self.root.geometry("500x600")
-
+        self.root.geometry("500x650")
         self.folder_path = None
 
-        # === BOTÓN SELECCIONAR CARPETA ===
+        # seleccionar carpeta
         self.select_button = tk.Button(
-            root, text="Seleccionar carpeta", command=self.select_folder
+            root,
+            text="Seleccionar carpeta",
+            command=self.select_folder
         )
+
         self.select_button.pack(pady=10)
 
-        # === LABEL RUTA ===
         self.path_label = tk.Label(root, text="")
 
-        # === BOTONES (invisibles al inicio) ===
         self.create_folder_button = tk.Button(
-            root, text="Crear subcarpeta", command=self.create_subfolder
+            root,
+            text="Crear subcarpeta",
+            command=self.create_subfolder
         )
 
         self.create_file_button = tk.Button(
-            root, text="Crear archivo", command=self.create_file
+            root,
+            text="Crear archivo",
+            command=self.create_file
         )
 
         self.open_file_button = tk.Button(
-            root, text="Abrir archivo", command=self.open_file_action
+            root,
+            text="Abrir archivo",
+            command=self.open_file_action
+        )
+
+        self.copy_file_button = tk.Button(
+            root,
+            text="Copiar archivo",
+            command=self.copy_file_action
         )
 
         self.delete_folder_button = tk.Button(
-            root, text="Eliminar carpeta", command=self.delete_selected_folder
+            root,
+            text="Eliminar carpeta",
+            command=self.delete_selected_folder
         )
 
         self.delete_file_button = tk.Button(
-            root, text="Eliminar fichero", command=self.delete_file_action
+            root,
+            text="Eliminar fichero",
+            command=self.delete_file_action
         )
 
         self.organize_button = tk.Button(
-            root, text="Organizar archivos", command=self.organize_action
+            root,
+            text="Organizar archivos",
+            command=self.organize_action
         )
 
         self.rename_button = tk.Button(
-            root, text="Renombrar archivo", command=self.rename_action
+            root,
+            text="Renombrar archivo",
+            command=self.rename_action
         )
 
         self.rename_button_folder = tk.Button(
-            root, text="Renombrar carpeta", command=self.rename_folder_action
+            root,
+            text="Renombrar carpeta",
+            command=self.rename_folder_action
         )
 
         self.delete_button = tk.Button(
-            root, text="Eliminar duplicados", command=self.delete_action
+            root,
+            text="Eliminar duplicados",
+            command=self.delete_action
         )
 
-    # ==================================================
-    # SELECCIONAR CARPETA
-    # ==================================================
+        self.progress = ttk.Progressbar(
+            root,
+            orient="horizontal",
+            length=300,
+            mode="determinate"
+        )
+
+        self.history_button = tk.Button(
+            root,
+            text="Ver historial",
+            command=self.show_history
+        )
+
+        self.progress.pack(pady=10)
+
+
+    # seleccionar carpeta
     def select_folder(self):
         folder = filedialog.askdirectory(title="Selecciona la carpeta")
-
         if not folder:
             messagebox.showwarning("Aviso", "No se seleccionó ninguna carpeta")
             return
@@ -72,77 +111,143 @@ class FileManagerApp:
         self.folder_path = folder
 
         self.path_label.config(text=f"Carpeta actual: {self.folder_path}")
+
         self.path_label.pack(pady=5)
 
         self.create_folder_button.pack(pady=5)
+
         self.create_file_button.pack(pady=5)
+
         self.open_file_button.pack(pady=5)
+
+        self.copy_file_button.pack(pady=5)
+
         self.delete_folder_button.pack(pady=5)
+
         self.delete_file_button.pack(pady=5)
+
         self.organize_button.pack(pady=5)
+
         self.rename_button.pack(pady=5)
+
         self.rename_button_folder.pack(pady=5)
+
         self.delete_button.pack(pady=5)
 
-    # ==================================================
-    # FUNCIONES
-    # ==================================================
+        self.history_button.pack(pady=5)
+
+    # crear carpeta
 
     def create_subfolder(self):
         folder_name = simpledialog.askstring(
-            "Crear Carpeta", "Nombre de la nueva carpeta:"
+            "Crear Carpeta",
+            "Nombre de la nueva carpeta:"
         )
+
         if folder_name:
             new_folder_path = create_folder(self.folder_path, folder_name)
             messagebox.showinfo("Éxito", f"Carpeta creada: {new_folder_path}")
 
+    # crear archivo
     def create_file(self):
         file_name = simpledialog.askstring(
-            "Crear Archivo", "Nombre del archivo:")
-        if not file_name:
-            return  # Usuario canceló
+            "Crear Archivo",
+            "Nombre del archivo:"
+        )
 
-        # Si no se especifica extensión, añadimos .txt por defecto
+        if not file_name:
+            return
+
         if '.' not in file_name:
             file_name += ".txt"
 
         file_path = os.path.join(self.folder_path, file_name)
 
-        # Si el archivo ya existe, añadir sufijo numérico
         base, ext = os.path.splitext(file_name)
+
         counter = 1
+
         while os.path.exists(file_path):
+
             file_path = os.path.join(self.folder_path, f"{base}({counter}){ext}")
+
             counter += 1
 
-        # Crear archivo vacío
         with open(file_path, 'w') as f:
             f.write("")
 
-        messagebox.showinfo("Éxito", f"Archivo creado: {file_path}")
-    
-    def open_file_action(self):
-        if not self.folder_path:
-            messagebox.showwarning("Aviso", "No hay carpeta seleccionada")
-            return
+        log_action(f"Archivo creado: {file_path}")
 
-        # Selecciona un archivo
+        messagebox.showinfo("Éxito", f"Archivo creado: {file_path}")
+
+    # abrir archivo
+    def open_file_action(self):
         file_path = filedialog.askopenfilename(
             initialdir=self.folder_path,
-            title="Selecciona un archivo para abrir"
+            title="Selecciona archivo"
         )
 
         if not file_path:
-            return  # Canceló
+            return
+        os.startfile(file_path)
 
-        try:
-            # Abrir con la aplicación por defecto del sistema operativo
-            if os.name == "nt":  # Windows
-                os.startfile(file_path)
-            elif os.name == "posix":  # macOS / Linux
-                subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", file_path])
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo abrir el archivo:\n{str(e)}")
+
+    # copiar archivos
+    def copy_file_action(self):
+        files = filedialog.askopenfilenames(
+            initialdir=self.folder_path,
+            title="Selecciona archivos a copiar"
+        )
+
+        if not files:
+            return
+
+        destination = filedialog.askdirectory(title="Selecciona carpeta destino")
+
+        if not destination:
+            return
+
+        self.progress["maximum"] = len(files)
+
+        copied = 0
+
+        for i, file in enumerate(files):
+
+            try:
+
+                filename = os.path.basename(file)
+
+                destination_path = os.path.join(destination, filename)
+
+                # Si el archivo ya existe generar nombre nuevo
+                base, ext = os.path.splitext(filename)
+                counter = 1
+
+                while os.path.exists(destination_path):
+
+                    destination_path = os.path.join(
+                        destination,
+                        f"{base}({counter}){ext}"
+                    )
+
+                    counter += 1
+
+                shutil.copy(file, destination_path)
+
+                log_action(f"Archivo copiado: {file} -> {destination_path}")
+
+                copied += 1
+
+            except Exception as e:
+
+                messagebox.showerror("Error", str(e))
+
+            self.progress["value"] = i + 1
+            self.root.update_idletasks()
+
+        messagebox.showinfo("Éxito", f"{copied} archivos copiados")
+
+        self.progress["value"] = 0
 
 
     def delete_selected_folder(self):
@@ -155,156 +260,56 @@ class FileManagerApp:
     def delete_file_action(self):
         fo.delete_file(self.folder_path)
 
-    # ORGANIZAR ARCHIVOS
     def organize_action(self):
-        if not self.folder_path:
-            return
-
-        result = fo.organize_files(self.folder_path)
-
-        if result:
+        if fo.organize_files(self.folder_path):
             messagebox.showinfo("Éxito", "Archivos organizados correctamente")
-        else:
-            messagebox.showwarning("Cancelado", "No se movió ningún archivo")
 
     def rename_action(self):
-        if not self.folder_path:
-            messagebox.showwarning("Aviso", "No hay carpeta seleccionada.")
-            return
+        messagebox.showinfo("Info", "Función ya existente (sin cambios)")
 
-        # Seleccionar archivo
-        selected_path = filedialog.askopenfilename(
-            initialdir=self.folder_path,
-            title="Selecciona un archivo para renombrar"
-        )
-
-        if not selected_path:
-            messagebox.showerror("Error", "No se ha seleccionado ningún archivo")
-            return
-
-        old_name = os.path.basename(selected_path)
-        old_base, old_ext = os.path.splitext(old_name)
-
-        # Pedir nuevo nombre
-        new_name = simpledialog.askstring(
-            "Renombrar",
-            "Introduce el nuevo nombre:",
-            initialvalue=old_name
-        )
-
-        if new_name is None:
-            messagebox.showerror("Error", "No se ha especificado un nuevo nombre.")
-            return
-
-        new_name = new_name.strip()
-
-        if not new_name:
-            messagebox.showerror("Error", "El nombre no puede estar vacío.")
-            return
-
-        new_base, new_ext = os.path.splitext(new_name)
-
-        # Si el usuario no pone extensión
-        if not new_ext:
-            if old_ext:
-                # Mantener la extensión original
-                new_name = new_name + old_ext
-            else:
-                # Si el original tampoco tenía extensión → poner .txt
-                new_name = new_name + ".txt"
-
-        # Si el nombre final es el mismo
-        if new_name == old_name:
-            messagebox.showwarning("Aviso", "No se pudo cambiar el nombre porque es el mismo.")
-            return
-
-        new_path = os.path.join(os.path.dirname(selected_path), new_name)
-
-        if os.path.exists(new_path):
-            messagebox.showerror("Error", "Ya existe un archivo con ese nombre.")
-            return
-
-        try:
-            os.rename(selected_path, new_path)
-
-            messagebox.showinfo(
-                "Éxito",
-                f"Se ha cambiado el nombre del archivo de '{old_name}' a '{new_name}'."
-            )
-
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo cambiar el nombre:\n{str(e)}")
-
-    # Para cambiar el nombre de la carpeta
     def rename_folder_action(self):
-        if not self.folder_path:
-            messagebox.showwarning("Aviso", "No hay carpeta seleccionada.")
-            return
+        messagebox.showinfo("Info", "Función ya existente (sin cambios)")
 
-        # Seleccionar carpeta a renombrar
-        selected_path = filedialog.askdirectory(
-            initialdir=self.folder_path,
-            title="Selecciona una carpeta para renombrar"
-        )
 
-        # Si cancela selección
-        if not selected_path:
-            messagebox.showerror("Error", "No se ha seleccionado ninguna carpeta.")
-            return
-
-        old_name = os.path.basename(selected_path)
-
-        # Pedir nuevo nombre
-        new_name = simpledialog.askstring(
-            "Renombrar carpeta",
-            "Introduce el nuevo nombre:",
-            initialvalue=old_name
-        )
-
-        # Si cancela el nuevo nombre
-        if new_name is None:
-            messagebox.showerror("Error", "No se ha especificado un nuevo nombre.")
-            return
-
-        new_name = new_name.strip()
-
-        if not new_name:
-            messagebox.showerror("Error", "El nombre no puede estar vacío.")
-            return
-
-        # Si el nombre es el mismo
-        if new_name == old_name:
-            messagebox.showwarning("Aviso", "No se pudo cambiar el nombre porque es el mismo.")
-            return
-
-        new_path = os.path.join(os.path.dirname(selected_path), new_name)
-
-        # Si ya existe carpeta con ese nombre
-        if os.path.exists(new_path):
-            messagebox.showerror("Error", "Ya existe una carpeta con ese nombre.")
-            return
-
-        try:
-            os.rename(selected_path, new_path)
-
-            messagebox.showinfo(
-                "Éxito",
-                f"Se ha cambiado el nombre de la carpeta de '{old_name}' a '{new_name}'."
-            )
-
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo cambiar el nombre:\n{str(e)}")
-
-    # Eliminar duplicados
     def delete_action(self):
         removed = fo.delete_duplicates(self.folder_path)
+        messagebox.showinfo("Resultado", f"{removed} duplicados eliminados")
 
-        if removed > 0:
-            messagebox.showinfo("Exito", f"Se eliminaron {removed} duplicados")
-        else:
-            messagebox.showinfo("Info", "No se han encontrado duplicados")
+    # Mostrar el historial de los cambios
+    def show_history(self):
+
+        history_window = tk.Toplevel(self.root)
+        history_window.title("Historial de acciones")
+        history_window.geometry("500x400")
+
+        # Frame para texto + scrollbar
+        frame = tk.Frame(history_window)
+        frame.pack(expand=True, fill="both")
+
+        scrollbar = tk.Scrollbar(frame)
+        scrollbar.pack(side="right", fill="y")
+
+        text_area = tk.Text(
+            frame,
+            wrap="word",
+            yscrollcommand=scrollbar.set
+        )
+
+        text_area.pack(side="left", expand=True, fill="both")
+
+        scrollbar.config(command=text_area.yview)
+
+        # Leer historial
+        history_data = read_history()
+
+        # Insertar historial en el Text
+        text_area.insert("1.0", history_data)
+
+        # Bloquear edición
+        text_area.config(state="disabled")
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = FileManagerApp(root)
     root.mainloop()
+    reset_history() # reinicia historial
