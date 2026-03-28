@@ -214,15 +214,14 @@ class FileManagerApp:
         for i, file in enumerate(files):
 
             try:
-
                 filename = os.path.basename(file)
+                base, ext = os.path.splitext(filename)
 
                 destination_path = os.path.join(destination, filename)
 
-                # Si el archivo ya existe generar nombre nuevo
-                base, ext = os.path.splitext(filename)
                 counter = 1
 
+                # Si el archivo ya existe crear nombre nuevo
                 while os.path.exists(destination_path):
 
                     destination_path = os.path.join(
@@ -232,14 +231,13 @@ class FileManagerApp:
 
                     counter += 1
 
-                shutil.copy(file, destination_path)
+                shutil.copy2(file, destination_path)
 
                 log_action(f"Archivo copiado: {file} -> {destination_path}")
 
                 copied += 1
 
             except Exception as e:
-
                 messagebox.showerror("Error", str(e))
 
             self.progress["value"] = i + 1
