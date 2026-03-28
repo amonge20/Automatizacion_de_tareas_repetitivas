@@ -5,10 +5,33 @@ from history import log_action
 
 def create_folder(parent_folder, new_folder_name):
     folder_path = os.path.join(parent_folder, new_folder_name)
-    os.makedirs(folder_path, exist_ok=True)
+
+    # Si ya existe
+    if os.path.exists(folder_path):
+        confirm = messagebox.askyesno(
+            "Carpeta existente",
+            f"La carpeta '{new_folder_name}' ya existe.\n¿Deseas crear otra con un nombre diferente?"
+        )
+
+        if not confirm:
+            return "Carpeta no creada"
+
+        contador = 1
+        while True:
+            new_name = f"{new_folder_name}({contador})"
+            new_path = os.path.join(parent_folder, new_name)
+
+            if not os.path.exists(new_path):
+                os.makedirs(new_path)
+                log_action(f"{new_path}")
+                return new_path
+
+            contador += 1
+
+    # Si no existe
+    os.makedirs(folder_path)
     log_action(f"Carpeta creada: {folder_path}")
     return folder_path
-
 
 def delete_folder(folder_path):
     if not os.path.exists(folder_path):
