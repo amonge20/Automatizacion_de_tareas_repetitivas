@@ -47,19 +47,19 @@ class FileManagerApp:
             command=self.copy_file_action
         )
 
-        self.delete_items_button = tk.Button(
+        self.delete_file_button = tk.Button(
             root,
-            text="Eliminar archivo/carpeta",
-            command=self.delete_items_action
+            text="Eliminar archivo",
+            command=self.delete_file_action
         )
-
-        self.organize_button = tk.Button(
+        
+        self.delete_folder_button = tk.Button(
             root,
-            text="Organizar archivos",
-            command=self.organize_action
+            text="Eliminar carpeta",
+            command=self.delete_folder_action
         )
-
-        self.rename_button = tk.Button(
+        
+        self.rename_file_button = tk.Button(
             root,
             text="Renombrar archivo",
             command=self.rename_action
@@ -71,18 +71,12 @@ class FileManagerApp:
             command=self.rename_folder_action
         )
 
-        self.delete_button = tk.Button(
-            root,
-            text="Eliminar duplicados",
-            command=self.delete_action
-        )
-
         self.progress = ttk.Progressbar(
             root,
             orient="horizontal",
             length=300,
             mode="determinate"
-        )
+        ) # No sirve
 
         self.history_button = tk.Button(
             root,
@@ -107,11 +101,10 @@ class FileManagerApp:
         self.create_file_button.pack(pady=5)
         self.open_file_button.pack(pady=5)
         self.copy_file_button.pack(pady=5)
-        self.delete_items_button.pack(pady=5)
-        self.organize_button.pack(pady=5)
-        self.rename_button.pack(pady=5)
+        self.delete_file_button.pack(pady=5)
+        self.delete_folder_button.pack(pady=5)
+        self.rename_file_button.pack(pady=5)
         self.rename_button_folder.pack(pady=5)
-        self.delete_button.pack(pady=5)
         self.history_button.pack(pady=5)
 
     # crear carpeta
@@ -199,63 +192,152 @@ class FileManagerApp:
 
         messagebox.showinfo("Éxito", f"{copied} archivos copiados")
         self.progress["value"] = 0
-
-    # eliminar archivos o carpetas (individual o múltiple)
-    def delete_items_action(self):
-        # seleccionar archivos
+        
+    # Eliminar archivos
+    def delete_file_action(self):
+        
         files = filedialog.askopenfilenames(
             initialdir=self.folder_path,
             title="Selecciona archivos a eliminar"
         )
-        # seleccionar carpeta (opcional)
-        folders = filedialog.askdirectory(title="Selecciona una carpeta a eliminar (opcional)")
 
-        items_to_delete = list(files)
-        if folders:
-            items_to_delete.append(folders)
-
-        if not items_to_delete:
+        if not files:
             return
 
         confirm = messagebox.askyesno(
             "Confirmar eliminación",
-            f"¿Seguro que quieres eliminar {len(items_to_delete)} elemento(s)?"
+            f"¿Seguro que quieres eliminar {len(files)} archivo(s)?"
         )
+
         if not confirm:
             return
 
         deleted = 0
-        for item in items_to_delete:
+
+        for file in files:
             try:
-                if os.path.isfile(item):
-                    os.remove(item)
-                    log_action(f"Archivo eliminado: {item}")
-                elif os.path.isdir(item):
-                    shutil.rmtree(item)
-                    log_action(f"Carpeta eliminada: {item}")
+                os.remove(file)
+                log_action(f"Archivo eliminado: {file}")
                 deleted += 1
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-        messagebox.showinfo("Resultado", f"{deleted} elemento(s) eliminado(s)")
+        messagebox.showinfo("Resultado", f"{deleted} archivo(s) eliminado(s)")
 
-    # organizar archivos
-    def organize_action(self):
-        if fo.organize_files(self.folder_path):
-            messagebox.showinfo("Éxito", "Archivos organizados correctamente")
+    # eliminar archivos o carpetas (individual o múltiple)
+    def delete_folder_action(self):
 
+        folders = []
+
+        while True:
+
+            folder = filedialog.askdirectory(
+                initialdir=self.folder_path,
+                title="Selecciona una carpeta"
+            )
+
+            if not folder:
+                break
+
+            folders.append(folder)
+
+            another = messagebox.askyesno(
+                "Añadir otra carpeta",
+                "¿Quieres seleccionar otra carpeta?"
+            )
+
+            if not another:
+                break
+
+        if not folders:
+            return
+
+        confirm = messagebox.askyesno(
+            "Confirmar eliminación",
+            f"¿Seguro que quieres eliminar {len(folders)} carpeta(s)?"
+        )
+
+        if not confirm:
+            return
+
+        deleted = 0
+
+        for folder in folders:
+            try:
+                shutil.rmtree(folder)
+                log_action(f"Carpeta eliminada: {folder}")
+                deleted += 1
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        messagebox.showinfo("Resultado", f"{deleted} carpeta(s) eliminada(s)")
+    
     # renombrar archivo
     def rename_action(self):
-        messagebox.showinfo("Info", "Función ya existente (sin cambios)")
+        files = filedialog.askopenfilenames(
+            initialdir=self.folder_path,
+            title="Selecciona archivos a renombrar"
+        )
+
+        if not files:
+            return
+
+        for file in files:
+
+            old_name = os.path.basename(file)
+
+            new_name = simpledialog.askstring(
+                "Renombrar archivo",
+                f"Nuevo nombre para:\n{old_name}"
+            )
+
+            if not new_name:
+                continue
+
+            base, ext = os.path.splitext(old_name)
+
+            # mantener extensión si el usuario no la pone
+            if "." not in new_name:
+                new_name += ext
+
+            new_path = os.path.join(os.path.dirname(file), new_name)
+
+            try:
+                os.rename(file, new_path)
+                log_action(f"Archivo renombrado: {file} -> {new_path}")
+
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        messagebox.showinfo("Éxito", "Renombrado completado")
 
     # renombrar carpeta
     def rename_folder_action(self):
-        messagebox.showinfo("Info", "Función ya existente (sin cambios)")
+        folder = filedialog.askdirectory(
+            initialdir=self.folder_path,
+            title="Selecciona carpeta a renombrar"
+        )
 
-    # eliminar duplicados
-    def delete_action(self):
-        removed = fo.delete_duplicates(self.folder_path)
-        messagebox.showinfo("Resultado", f"{removed} duplicados eliminados")
+        if not folder:
+            return
+
+        old_name = os.path.basename(folder)
+        new_name = simpledialog.askstring(
+            "Renombrar carpeta",
+            f"Nuevo nombre para:\n{old_name}"
+        )
+
+        if not new_name:
+            return
+
+        new_path = os.path.join(os.path.dirname(folder), new_name)
+
+        try:
+            os.rename(folder, new_path)
+            log_action(f"Carpeta renombrada: {folder} -> {new_path}")
+            messagebox.showinfo("Éxito", f"Carpeta renombrada a: {new_name}")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     # mostrar historial
     def show_history(self):
