@@ -11,15 +11,15 @@ Funcionalidades principales:
 
 - Selección de carpetas de manera intuitiva
 
+- Creación de archivos y de carpetas
+
+- Abrir ficheros 
+
 - Organización de archivos por tipo o extensión
 
-- Renombrado masivo de archivos
+- Renombrado de archivo o de carpeta
 
-- Eliminación de duplicados
-
-- Copia o movimiento de archivos
-
-- Barra de progreso y log de acciones realizadas
+- Copia de archivos
 
 - Ideal para quienes manejan grandes cantidades de archivos y quieren simplificar tareas repetitivas con un solo clic.
 
